@@ -323,8 +323,8 @@ def Deblock_QED(clp, quant1=24, quant2=26, aOff1=1, bOff1=2, aOff2=1, bOff2=2, u
     # block
     block = clp.std.BlankClip(width=6, height=6, format=clp.format.replace(color_family=vs.GRAY, subsampling_w=0, subsampling_h=0), length=1, color=[0])
     block = block.std.AddBorders(1, 1, 1, 1, color=[peak])
-    block = core.std.StackHorizontal([block for i in range(clp.width // 8)])
-    block = core.std.StackVertical([block for i in range(clp.height // 8)])
+    block = core.std.StackHorizontal([block for _ in range(clp.width // 8)])
+    block = core.std.StackVertical([block for _ in range(clp.height // 8)])
     if not isGray:
         blockc = block.std.CropAbs(width=clp.width >> clp.format.subsampling_w, height=clp.height >> clp.format.subsampling_h)
         block = core.std.ShufflePlanes([block, blockc], planes=[0, 0, 0], colorfamily=clp.format.color_family)
@@ -411,7 +411,8 @@ def DeHalo_alpha(clp, rx=2.0, ry=2.0, darkstr=1.0, brightstr=1.0, lowsens=50, hi
     halos = clp.resize.Bicubic(m4(ox / rx), m4(oy / ry), filter_param_a=1/3, filter_param_b=1/3).resize.Bicubic(ox, oy, filter_param_a=1, filter_param_b=0)
     are = core.std.Expr([clp.std.Maximum(), clp.std.Minimum()], expr=['x y -'])
     ugly = core.std.Expr([halos.std.Maximum(), halos.std.Minimum()], expr=['x y -'])
-    expr = f'y x - y y 0 = + / {peak} * {scale(lowsens, peak)} - y {scale(256, peak)} + {scale(512, peak)} / {highsens / 100} + * {"0 max 1 min" if not isInteger else ""}'
+    expr = f'y x - y y 0 = + / {peak} * {scale(lowsens, peak)} - y {scale(256, peak)} + {scale(512, peak)} / {highsens / 100} + * {"" if isInteger else "0 max 1 min"}'
+
     so = core.std.Expr([ugly, are], expr=[expr])
     lets = core.std.MaskedMerge(halos, clp, so)
     if ss <= 1:
